@@ -7,6 +7,7 @@ import com.ex.auction.domain.entity.User;
 import com.ex.auction.domain.enums.AuctionStatus;
 import com.ex.auction.domain.enums.BidStatus;
 import com.ex.auction.domain.enums.ProductCondition;
+import com.ex.auction.dto.AuctionResponse;
 import com.ex.auction.dto.AuctionUpdateMessage;
 import com.ex.auction.exception.AuctionEndedException;
 import com.ex.auction.exception.AuctionNotFoundException;
@@ -205,7 +206,8 @@ public class AuctionService {
 
         // For simplicity, create a simple product on-the-fly
         // In production: Link to existing product or create via ProductService
-        Product product = productRepository.findByProductId(productId);
+        Product product = productRepository.findByProductId(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found: " + productId));
         // Note: In real app, save product to DB first with category
         // For testing purposes, we create inline
 
@@ -286,10 +288,23 @@ public class AuctionService {
     }
 
     /**
-     * Extend auction end time (soft-close)
+     * Convert Auction entity to AuctionResponse DTO
+     * Made public for UserController access
      */
-    private void extendAuctionEndTime(Auction auction) {
+    public AuctionResponse toResponse(Auction auction) {
         auction.setEndTime(auction.getEndTime().plusMinutes(SOFT_CLOSE_MINUTES));
         log.info("Auction {} end time extended to {}", auction.getAuctionId(), auction.getEndTime());
+        return AuctionResponse.builder()
+                .id(auction.getAuctionId())
+                .productName(auction.getProduct().getProductName())
+                .sellerName(auction.getSeller().getUsername())
+                .startingPrice(auction.getStartingPrice())
+                .currentPrice(auction.getCurrentPrice())
+                .bidIncrement(auction.getBidIncrement())
+                .startTime(auction.getStartTime())
+                .endTime(auction.getEndTime())
+                .status(auction.getStatus())
+                .totalBids(auction.getTotalBids())
+                .build();
     }
 }

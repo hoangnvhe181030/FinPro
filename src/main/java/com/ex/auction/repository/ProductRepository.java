@@ -1,23 +1,16 @@
 package com.ex.auction.repository;
 
-import com.ex.auction.domain.entity.Category;
 import com.ex.auction.domain.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    
-    List<Product> findByCategory(Category category);
+    // Product entity has no seller field
+    // If you need to query by seller, add seller field to Product entity first
 
-    @Query("SELECT p FROM Product p WHERE p.category.categoryId = :categoryId")
-    List<Product> findByCategoryId(@Param("categoryId") Long categoryId);
-    
-    List<Product> findByProductNameContainingIgnoreCase(String productName);
-
-    Product findByProductId(Long productId);
+    // Find product by ID (for existence check)
+    Optional<Product> findByProductId(Long productId);
 }

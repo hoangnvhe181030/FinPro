@@ -1,5 +1,6 @@
 package com.ex.auction.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,10 +30,12 @@ public class Category {
     @Column(name = "description", length = 500)
     private String description;
 
+    @JsonIgnore // Prevent lazy loading exception during JSON serialization
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_category_id")
     private Category parentCategory;
 
+    @JsonIgnore // Prevent lazy loading exception during JSON serialization
     @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Category> subCategories = new ArrayList<>();

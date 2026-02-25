@@ -31,6 +31,10 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
             "FETCH FIRST 1 ROW ONLY", nativeQuery = true)
     Optional<Bid> findHighestBid(@Param("auctionId") Long auctionId);
 
+    // Find bids by bidder user ID
+    @Query("SELECT b FROM Bid b WHERE b.user.userId = :userId")
+    List<Bid> findByBidderUserId(@Param("userId") Long userId);
+
     // Fixed: Auction entity has 'auctionId' not 'id'
     @Query("SELECT COUNT(b) FROM Bid b WHERE b.auction.auctionId = :auctionId")
     long countByAuctionId(@Param("auctionId") Long auctionId);

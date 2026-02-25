@@ -25,8 +25,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // Register STOMP endpoint at /ws
         // Clients will connect to: ws://localhost:8080/ws
+        // Note: Removed SockJS for Flutter compatibility (stomp_dart_client uses plain
+        // WebSocket)
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*") // Allow all origins for development (Flutter)
-                .withSockJS(); // Enable SockJS fallback for browsers without WebSocket support
+                .setAllowedOriginPatterns("*"); // Allow all origins for development (Flutter)
     }
 }

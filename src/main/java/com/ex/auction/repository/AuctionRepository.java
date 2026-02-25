@@ -13,15 +13,13 @@ import java.util.List;
 @Repository
 public interface AuctionRepository extends JpaRepository<Auction, Long> {
 
-    List<Auction> findByStatus(AuctionStatus status);
-
     @Query("SELECT DISTINCT a FROM Auction a " +
             "LEFT JOIN FETCH a.product " +
             "LEFT JOIN FETCH a.seller " +
             "WHERE a.status = :status AND a.endTime > :now " +
             "ORDER BY a.endTime ASC")
     List<Auction> findActiveAuctions(@Param("status") AuctionStatus status,
-                                     @Param("now") LocalDateTime now);
+            @Param("now") LocalDateTime now);
 
     // Fixed: User entity has 'userId' not 'id'
     @Query("SELECT a FROM Auction a WHERE a.seller.userId = :sellerId")
@@ -30,6 +28,11 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     @Query("SELECT a FROM Auction a WHERE a.status = 'ACTIVE' AND a.endTime <= :now")
     List<Auction> findExpiredAuctions(@Param("now") LocalDateTime now);
 
+    // Find auctions by seller (for UserController)
+    @Query("SELECT a FROM Auction a WHERE a.seller.userId = :sellerId")
+    List<Auction> findBySellerUserId(@Param("sellerId") Long sellerId);
+
+    // Find auctions won by user
     @Query("SELECT a FROM Auction a WHERE a.winner.userId = :userId")
-    List<Auction> findByWinnerId(@Param("userId") Long userId);
+    List<Auction> findByWinnerUserId(@Param("userId") Long userId);
 }

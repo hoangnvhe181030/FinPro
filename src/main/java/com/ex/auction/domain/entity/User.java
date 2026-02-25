@@ -4,17 +4,19 @@ import com.ex.auction.domain.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class User {
 
     @Id
@@ -22,14 +24,14 @@ public class User {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(name = "username", unique = true, nullable = false, length = 50)
+    @Column(nullable = false, unique = true, length = 50)
     private String username;
 
-    @Column(name = "email", unique = true, nullable = false, length = 100)
+    @Column(unique = true, length = 100)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+    @Column(length = 255)
+    private String password; // BCrypt hashed
 
     @Column(name = "full_name", length = 100)
     private String fullName;

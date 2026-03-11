@@ -8,6 +8,7 @@ class WalletProvider with ChangeNotifier {
   Wallet? _wallet;
   bool _isLoading = false;
   String? _error;
+  List<Map<String, dynamic>> _transactions = [];
 
   WalletProvider(this._apiService);
 
@@ -15,8 +16,10 @@ class WalletProvider with ChangeNotifier {
   Wallet? get wallet => _wallet;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  List<Map<String, dynamic>> get transactions => _transactions;
   
   double get balance => _wallet?.balance ?? 0.0;
+  double get totalBalance => _wallet?.balance ?? 0.0;
   double get availableBalance => _wallet?.availableBalance ?? 0.0;
   double get reservedBalance => _wallet?.reservedBalance ?? 0.0;
 
@@ -39,11 +42,8 @@ class WalletProvider with ChangeNotifier {
     }
   }
 
-  // Deposit funds
-  Future<bool> deposit({
-    required int userId,
-    required double amount,
-  }) async {
+  // Deposit funds (simplified signature)
+  Future<bool> deposit(int userId, double amount) async {
     try {
       final data = await _apiService.depositFunds(userId: userId, amount: amount);
       _wallet = Wallet.fromJson(data);
@@ -66,3 +66,4 @@ class WalletProvider with ChangeNotifier {
     notifyListeners();
   }
 }
+

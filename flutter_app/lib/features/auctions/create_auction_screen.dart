@@ -1,10 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
 import '../../core/constants/app_colors.dart';
-import '../../data/models/category.dart';
-import '../../data/providers/auth_provider.dart';
+import '../../core/widgets/app_widgets.dart';
 import '../../data/providers/auction_provider.dart';
+import '../../data/providers/auth_provider.dart';
 
 class CreateAuctionScreen extends StatefulWidget {
   const CreateAuctionScreen({super.key});
@@ -15,59 +15,23 @@ class CreateAuctionScreen extends StatefulWidget {
 
 class _CreateAuctionScreenState extends State<CreateAuctionScreen> {
   final _formKey = GlobalKey<FormState>();
-  
-  // Controllers
   final _productNameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _startingPriceController = TextEditingController();
-  final _bidIncrementController = TextEditingController();
-  final _durationController = TextEditingController();
-
-  // Dropdown values
-  List<Category> _categories = [];
-  int? _selectedCategoryId;
+  final _bidIncrementController = TextEditingController(text: '10000');
+  
   String _selectedCondition = 'NEW';
-  bool _isLoadingCategories = false;
+  int _durationMinutes = 60;
   bool _isCreating = false;
 
-  // Conditions are fixed
-  static const List<String> _conditions = [
-    'NEW',
-    'LIKE_NEW',
-    'GOOD',
-    'FAIR',
+  final List<Map<String, dynamic>> _durations = [
+    {'label': '30 min', 'value': 30},
+    {'label': '1 hour', 'value': 60},
+    {'label': '3 hours', 'value': 180},
+    {'label': '6 hours', 'value': 360},
+    {'label': '12 hours', 'value': 720},
+    {'label': '24 hours', 'value': 1440},
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchCategories();
-  }
-
-  Future<void> _fetchCategories() async {
-    setState(() => _isLoadingCategories = true);
-    
-    try {
-      final auctionProvider = context.read<AuctionProvider>();
-      final response = await auctionProvider.apiService.dio.get('/categories');
-      
-      final List<dynamic> data = response.data;
-      setState(() {
-        _categories = data.map((json) => Category.fromJson(json)).toList();
-        // Set first category as default if available
-        if (_categories.isNotEmpty) {
-          _selectedCategoryId = _categories.first.id;
-        }
-      });
-    } catch (e) {
-      print('Error fetching categories: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load categories: $e')),
-      );
-    } finally {
-      setState(() => _isLoadingCategories = false);
-    }
-  }
 
   @override
   void dispose() {
@@ -75,263 +39,221 @@ class _CreateAuctionScreenState extends State<CreateAuctionScreen> {
     _descriptionController.dispose();
     _startingPriceController.dispose();
     _bidIncrementController.dispose();
-    _durationController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleCreate() async {
+  Future<void> _createAuction() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isCreating = true);
 
     try {
-      final authProvider = context.read<AuthProvider>();
-      final auctionProvider = context.read<AuctionProvider>();
+      final provider = context.read<AuctionProvider>();
+      final userId = context.read<AuthProvider>().currentUser?.userId;
 
-      if (authProvider.currentUser == null) {
-        throw Exception('Not logged in');
-      }
+      // Create product first, then auction
+      final headers = {'X-User-Id': userId.toString()};
 
-      // Step 1: Create product
-      final productResponse = await auctionProvider.apiService.dio.post(
-        '/products',
+      final productResponse = await provider.apiService.dio.post(
+        '/api/products',
         data: {
           'productName': _productNameController.text.trim(),
           'description': _descriptionController.text.trim(),
-          'categoryId': _selectedCategoryId,
           'condition': _selectedCondition,
+          'categoryId': 1, // Default category
         },
-        options: Options(
-          headers: {
-            'X-User-Id': authProvider.currentUser!.userId.toString(),
-          },
-        ),
+        options: Options(headers: headers),
       );
 
       final productId = productResponse.data['productId'];
 
-      // Step 2: Create auction
-      await auctionProvider.apiService.dio.post(
-        '/auctions',
+      await provider.apiService.dio.post(
+        '/api/auctions',
         data: {
           'productId': productId,
           'startingPrice': double.parse(_startingPriceController.text),
           'bidIncrement': double.parse(_bidIncrementController.text),
-          'durationMinutes': int.parse(_durationController.text) * 60, // Convert hours to minutes
+          'durationMinutes': _durationMinutes,
         },
-        options: Options(
-          headers: {
-            'X-User-Id': authProvider.currentUser!.userId.toString(),
-          },
-        ),
+        options: Options(headers: headers),
       );
 
-      // Refresh auctions
-      await auctionProvider.fetchAuctions();
-
       if (mounted) {
-        setState(() => _isCreating = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Auction created successfully!'),
-            backgroundColor: AppColors.success,
-          ),
+          const SnackBar(content: Text('Auction created!'), backgroundColor: AppColors.success),
         );
-        Navigator.of(context).pop();
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isCreating = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create auction: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
         );
       }
+    } finally {
+      setState(() => _isCreating = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.scaffoldDark,
       appBar: AppBar(
+        backgroundColor: AppColors.scaffoldDark,
+        leading: IconButton(
+          icon: const Icon(Icons.close, size: 24),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text('Create Auction'),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Section: Product Details
-            Text(
-              'Product Details',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-
-            // Product Name
-            TextFormField(
-              controller: _productNameController,
-              decoration: const InputDecoration(
-                labelText: 'Product Name',
-                hintText: 'e.g., iPhone 14 Pro Max',
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter product name';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Description
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                hintText: 'Describe the product...',
-              ),
-              maxLines: 3,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter description';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Category Dropdown
-            _isLoadingCategories
-                ? const LinearProgressIndicator()
-                : DropdownButtonFormField<int>(
-                    value: _selectedCategoryId,
-                    decoration: const InputDecoration(
-                      labelText: 'Category',
-                    ),
-                    items: _categories.map((category) {
-                      return DropdownMenuItem(
-                        value: category.id,
-                        child: Text(category.name),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() => _selectedCategoryId = value);
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Please select a category';
-                      }
-                      return null;
-                    },
-                  ),
-            const SizedBox(height: 16),
-
-            // Condition Dropdown
-            DropdownButtonFormField<String>(
-              value: _selectedCondition,
-              decoration: const InputDecoration(
-                labelText: 'Condition',
-              ),
-              items: _conditions.map((condition) {
-                return DropdownMenuItem(
-                  value: condition,
-                  child: Text(condition.replaceAll('_', ' ')),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() => _selectedCondition = value!);
-              },
-            ),
-            const SizedBox(height: 32),
-
-            // Section: Auction Settings
-            Text(
-              'Auction Settings',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-
-            // Starting Price
-            TextFormField(
-              controller: _startingPriceController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Starting Price (đ)',
-                hintText: 'e.g., 1000000',
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter starting price';
-                }
-                if (double.tryParse(value) == null) {
-                  return 'Please enter a valid number';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Bid Increment
-            TextFormField(
-              controller: _bidIncrementController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Bid Increment (đ)',
-                hintText: 'e.g., 50000',
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter bid increment';
-                }
-                if (double.tryParse(value) == null) {
-                  return 'Please enter a valid number';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Duration (hours)
-            TextFormField(
-              controller: _durationController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Duration (hours)',
-                hintText: 'e.g., 24',
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter duration';
-                }
-                if (int.tryParse(value) == null) {
-                  return 'Please enter a valid number';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 32),
-
-            // Create Button
-            ElevatedButton(
-              onPressed: _isCreating ? null : _handleCreate,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: _isCreating
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Product info section
+              GlassCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Product Information', style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _productNameController,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: const InputDecoration(
+                        labelText: 'Product Name',
+                        prefixIcon: Icon(Icons.inventory_2_outlined),
                       ),
-                    )
-                  : const Text('Create Auction'),
-            ),
-          ],
+                      validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _descriptionController,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Description',
+                        prefixIcon: Icon(Icons.description_outlined),
+                        alignLabelWithHint: true,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    // Condition dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedCondition,
+                      dropdownColor: AppColors.cardDarkElevated,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: const InputDecoration(
+                        labelText: 'Condition',
+                        prefixIcon: Icon(Icons.grade_outlined),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'NEW', child: Text('New')),
+                        DropdownMenuItem(value: 'LIKE_NEW', child: Text('Like New')),
+                        DropdownMenuItem(value: 'GOOD', child: Text('Good')),
+                        DropdownMenuItem(value: 'FAIR', child: Text('Fair')),
+                        DropdownMenuItem(value: 'USED', child: Text('Used')),
+                      ],
+                      onChanged: (v) => setState(() => _selectedCondition = v!),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Pricing section
+              GlassCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Pricing', style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _startingPriceController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: const InputDecoration(
+                        labelText: 'Starting Price (VND)',
+                        prefixIcon: Icon(Icons.monetization_on_outlined),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Required';
+                        if (double.tryParse(v) == null) return 'Invalid number';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _bidIncrementController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: const InputDecoration(
+                        labelText: 'Bid Increment (VND)',
+                        prefixIcon: Icon(Icons.trending_up),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Duration section
+              GlassCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Duration', style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _durations.map((d) {
+                        final isSelected = _durationMinutes == d['value'];
+                        return GestureDetector(
+                          onTap: () => setState(() => _durationMinutes = d['value']),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppColors.primary : AppColors.cardDarkElevated,
+                              borderRadius: BorderRadius.circular(10),
+                              border: isSelected ? null : Border.all(color: AppColors.border.withOpacity(0.3)),
+                            ),
+                            child: Text(
+                              d['label'],
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : AppColors.textSecondary,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              GradientButton(
+                text: 'Create Auction',
+                icon: Icons.gavel,
+                isLoading: _isCreating,
+                onPressed: _createAuction,
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/app_widgets.dart';
 import '../../data/providers/auth_provider.dart';
 import 'register_screen.dart';
 import '../../core/navigation/main_screen.dart';
@@ -51,106 +53,142 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.scaffoldDark,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 28),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo/Icon
-                  Icon(
-                    Icons.gavel,
-                    size: 80,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(height: 16),
-                  
+                  // Logo with glow
+                  Center(
+                    child: Container(
+                      width: 88,
+                      height: 88,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.4),
+                            blurRadius: 24,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.gavel_rounded,
+                        size: 42,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                      .animate()
+                      .scale(
+                        begin: const Offset(0.7, 0.7),
+                        end: const Offset(1.0, 1.0),
+                        duration: 500.ms,
+                        curve: Curves.easeOutBack,
+                      )
+                      .fadeIn(duration: 400.ms),
+
+                  const SizedBox(height: 32),
+
                   // Title
                   Text(
                     'Welcome Back',
-                    style: Theme.of(context).textTheme.headlineMedium,
+                    style: Theme.of(context).textTheme.displayMedium,
                     textAlign: TextAlign.center,
-                  ),
+                  ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.2, end: 0),
+
                   const SizedBox(height: 8),
                   Text(
-                    'Login to continue bidding',
+                    'Sign in to continue bidding',
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
-                  ),
+                  ).animate(delay: 300.ms).fadeIn(),
+
                   const SizedBox(height: 48),
-                  
-                  // Username Field
-                  TextFormField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Username',
-                      prefixIcon: Icon(Icons.person),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter username';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Password Field
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
+
+                  // Login form in glass card
+                  GlassCard(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        // Username
+                        TextFormField(
+                          controller: _usernameController,
+                          style: const TextStyle(color: AppColors.textPrimary),
+                          decoration: const InputDecoration(
+                            labelText: 'Username',
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter username';
+                            }
+                            return null;
+                          },
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
+                        const SizedBox(height: 20),
+
+                        // Password
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          style: const TextStyle(color: AppColors.textPrimary),
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                              onPressed: () {
+                                setState(() => _obscurePassword = !_obscurePassword);
+                              },
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter password';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 28),
+
+                        // Login button
+                        Consumer<AuthProvider>(
+                          builder: (context, authProvider, _) {
+                            return GradientButton(
+                              text: 'Sign In',
+                              icon: Icons.login_rounded,
+                              isLoading: authProvider.isLoading,
+                              onPressed: _handleLogin,
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter password';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Login Button
-                  Consumer<AuthProvider>(
-                    builder: (context, authProvider, _) {
-                      return ElevatedButton(
-                        onPressed: authProvider.isLoading ? null : _handleLogin,
-                        child: authProvider.isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : const Text('Login'),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Register Link
+                  ).animate(delay: 400.ms).fadeIn().slideY(begin: 0.15, end: 0),
+
+                  const SizedBox(height: 24),
+
+                  // Register link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("Don't have an account? "),
+                      Text(
+                        "Don't have an account? ",
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
                       TextButton(
                         onPressed: () {
                           Navigator.of(context).push(
@@ -159,10 +197,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           );
                         },
-                        child: const Text('Register'),
+                        child: const Text('Sign Up'),
                       ),
                     ],
-                  ),
+                  ).animate(delay: 500.ms).fadeIn(),
                 ],
               ),
             ),

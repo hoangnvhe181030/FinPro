@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-01-25T21:58:44+0700",
-    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.45.0.v20260101-2150, environment: Java 21.0.9 (Eclipse Adoptium)"
+    date = "2026-03-11T14:40:26+0700",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.12 (Oracle Corporation)"
 )
 @Component
 public class AuctionMapperImpl implements AuctionMapper {
@@ -28,12 +28,12 @@ public class AuctionMapperImpl implements AuctionMapper {
         auctionResponse.id( auction.getAuctionId() );
         auctionResponse.productName( auctionProductProductName( auction ) );
         auctionResponse.sellerName( auctionSellerUsername( auction ) );
-        auctionResponse.bidIncrement( auction.getBidIncrement() );
         auctionResponse.currentPrice( auction.getCurrentPrice() );
+        auctionResponse.startingPrice( auction.getStartingPrice() );
+        auctionResponse.bidIncrement( auction.getBidIncrement() );
+        auctionResponse.startTime( auction.getStartTime() );
         auctionResponse.endTime( auction.getEndTime() );
         auctionResponse.originalEndTime( auction.getOriginalEndTime() );
-        auctionResponse.startTime( auction.getStartTime() );
-        auctionResponse.startingPrice( auction.getStartingPrice() );
         auctionResponse.status( auction.getStatus() );
         auctionResponse.totalBids( auction.getTotalBids() );
 

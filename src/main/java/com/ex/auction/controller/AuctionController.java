@@ -57,6 +57,80 @@ public class AuctionController {
     }
 
     /**
+     * GET /api/auctions/search - Search auctions by keyword, category, price range
+     */
+    @GetMapping("/auctions/search")
+    public ResponseEntity<List<AuctionResponse>> searchAuctions(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "newest") String sort) {
+
+        log.info("GET /api/auctions/search - keyword: {}, category: {}, price: {}-{}", keyword, categoryId, minPrice, maxPrice);
+
+        List<Auction> auctions;
+        if (status != null && status.equalsIgnoreCase("ENDED")) {
+            auctions = auctionService.getActiveAuctions(AuctionStatus.ENDED, LocalDateTime.now().plusYears(100));
+        } else {
+            auctions = auctionService.getActiveAuctions(AuctionStatus.ACTIVE, LocalDateTime.now());
+        }
+
+        // Filter by keyword
+        if (keyword != null && !keyword.isEmpty()) {
+            String lowerKeyword = keyword.toLowerCase();
+            auctions = auctions.stream()
+                    .filter(a -> a.getProduct().getProductName().toLowerCase().contains(lowerKeyword))
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by category
+        if (categoryId != null) {
+            auctions = auctions.stream()
+                    .filter(a -> a.getProduct().getCategory() != null &&
+                            a.getProduct().getCategory().getCategoryId().equals(categoryId))
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by price range
+        if (minPrice != null) {
+            auctions = auctions.stream()
+                    .filter(a -> a.getCurrentPrice().doubleValue() >= minPrice)
+                    .collect(Collectors.toList());
+        }
+        if (maxPrice != null) {
+            auctions = auctions.stream()
+                    .filter(a -> a.getCurrentPrice().doubleValue() <= maxPrice)
+                    .collect(Collectors.toList());
+        }
+
+        // Sort
+        switch (sort.toLowerCase()) {
+            case "price_asc":
+                auctions.sort((a, b) -> a.getCurrentPrice().compareTo(b.getCurrentPrice()));
+                break;
+            case "price_desc":
+                auctions.sort((a, b) -> b.getCurrentPrice().compareTo(a.getCurrentPrice()));
+                break;
+            case "bids":
+                auctions.sort((a, b) -> b.getTotalBids().compareTo(a.getTotalBids()));
+                break;
+            case "ending_soon":
+                auctions.sort((a, b) -> a.getEndTime().compareTo(b.getEndTime()));
+                break;
+            default: // newest
+                auctions.sort((a, b) -> b.getStartTime().compareTo(a.getStartTime()));
+        }
+
+        List<AuctionResponse> response = auctions.stream()
+                .map(auctionMapper::toAuctionResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * GET /api/auctions/{id} - Get auction detail
      */
     @GetMapping("/auctions/{id}")

@@ -129,4 +129,40 @@ public class UserController {
 
                 return ResponseEntity.ok(response);
         }
+
+        /**
+         * Update user profile
+         * PUT /api/users/{userId}/profile
+         */
+        @PutMapping("/{userId}/profile")
+        public ResponseEntity<java.util.Map<String, Object>> updateProfile(
+                        @PathVariable Long userId,
+                        @RequestBody java.util.Map<String, String> request) {
+                log.info("PUT /api/users/{}/profile", userId);
+
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+
+                if (request.containsKey("fullName")) {
+                        user.setFullName(request.get("fullName"));
+                }
+                if (request.containsKey("email")) {
+                        user.setEmail(request.get("email"));
+                }
+                if (request.containsKey("phoneNumber")) {
+                        user.setPhoneNumber(request.get("phoneNumber"));
+                }
+
+                userRepository.save(user);
+
+                java.util.Map<String, Object> response = new java.util.HashMap<>();
+                response.put("userId", user.getUserId());
+                response.put("username", user.getUsername());
+                response.put("email", user.getEmail());
+                response.put("fullName", user.getFullName());
+                response.put("phoneNumber", user.getPhoneNumber());
+                response.put("message", "Profile updated successfully");
+
+                return ResponseEntity.ok(response);
+        }
 }

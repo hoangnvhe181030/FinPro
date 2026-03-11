@@ -1,5 +1,4 @@
 package com.ex.auction.dto;
-<<<<<<< HEAD
 import jakarta.validation.Valid;
 // DTO
 public class ProductCreateRequest {
@@ -48,8 +47,3 @@ public class ProductCreateRequest {
         this.condition = condition;
     }
 }
-=======
-
-public class ProductCreateRequest {
-}
->>>>>>> 886c9b0dfd0a66ed3b573c5281ce122c7d15c4f9

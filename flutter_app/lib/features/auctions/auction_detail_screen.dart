@@ -460,9 +460,9 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> with SingleTi
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(bid['bidderName'] ?? 'User #${bid['bidderId']}', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+                        Text(bid['username'] ?? 'User #${bid['id']}', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
                         const SizedBox(height: 2),
-                        Text(bid['bidTime'] != null ? DateFormat('HH:mm dd/MM').format(DateTime.parse(bid['bidTime'])) : '', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                        Text(bid['time'] != null ? DateFormat('HH:mm dd/MM').format(DateTime.parse(bid['time'])) : '', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                       ],
                     ),
                   ),

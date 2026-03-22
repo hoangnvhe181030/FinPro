@@ -10,6 +10,7 @@ import '../../data/providers/auth_provider.dart';
 import '../auctions/auction_detail_screen.dart';
 import '../auctions/create_auction_screen.dart';
 import '../search/search_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -164,10 +165,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: AppColors.primary.withOpacity(0.2),
-                child: Icon(Icons.person, color: AppColors.primaryLight, size: 24),
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardDark,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.notifications_outlined, color: AppColors.textSecondary, size: 22),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppColors.primary.withOpacity(0.2),
+                    child: Icon(Icons.person, color: AppColors.primaryLight, size: 24),
+                  ),
+                ],
               ),
             ],
           ).animate().fadeIn(duration: 400.ms),

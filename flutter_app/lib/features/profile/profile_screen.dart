@@ -8,6 +8,7 @@ import '../../data/providers/auth_provider.dart';
 import '../../data/providers/auction_provider.dart';
 import '../../data/providers/wallet_provider.dart';
 import '../auctions/auction_detail_screen.dart';
+import '../wallet/wallet_screen.dart';
 import '../settings/settings_screen.dart';
 import '../auth/login_screen.dart';
 
@@ -76,9 +77,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Profile', style: Theme.of(context).textTheme.displayMedium),
-                      IconButton(
-                        icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary),
-                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.account_balance_wallet_outlined, color: AppColors.textSecondary),
+                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen())),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary),
+                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -96,7 +105,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         ),
                         child: Center(
                           child: Text(
-                            (user?.fullName ?? user?.username ?? 'U')[0].toUpperCase(),
+                            _getInitial(user?.fullName, user?.username),
                             style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800),
                           ),
                         ),
@@ -170,6 +179,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
+  String _getInitial(String? fullName, String? username) {
+    final name = fullName?.isNotEmpty == true ? fullName! : (username?.isNotEmpty == true ? username! : 'U');
+    return name[0].toUpperCase();
+  }
+
   Widget _buildStatsGrid() {
     if (_isLoadingStats || _stats == null) {
       return Row(
@@ -239,7 +253,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           itemBuilder: (context, index) {
             final a = auctions[index];
             return GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AuctionDetailScreen(auctionId: a['auctionId']))),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AuctionDetailScreen(auctionId: a['id']))),
               child: Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(14),

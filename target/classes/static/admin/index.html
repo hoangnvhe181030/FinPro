@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auction Admin Dashboard</title>
+    <link rel="stylesheet" href="admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">⚡ Auction Admin</div>
+        <nav class="sidebar-nav">
+            <button class="nav-item active" onclick="showSection('dashboard')">
+                <span class="icon">📊</span> Dashboard
+            </button>
+            <button class="nav-item" onclick="showSection('reports')">
+                <span class="icon">📋</span> Reports
+            </button>
+            <button class="nav-item" onclick="showSection('rankings')">
+                <span class="icon">🏆</span> Rankings
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Dashboard Section -->
+        <div id="section-dashboard" class="section active">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-subtitle">System overview & live statistics</p>
+                </div>
+                <button class="btn btn-secondary" onclick="loadDashboard()">↻ Refresh</button>
+            </div>
+            <div id="stats-grid" class="stats-grid"></div>
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="chart-title">Auction Status Distribution</div>
+                    <canvas id="auctionChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Recent Transactions (7 days)</div>
+                    <canvas id="txChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="section-reports" class="section">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Report Builder</h1>
+                    <p class="page-subtitle">Dynamic reports — select entity, pick fields, add filters</p>
+                </div>
+            </div>
+            <div class="report-builder">
+                <div class="builder-row">
+                    <div class="form-group">
+                        <label>Entity</label>
+                        <select id="entitySelect" onchange="onEntityChange()">
+                            <option value="">-- Select Entity --</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateReport()">▶ Generate Report</button>
+                    <button class="btn btn-accent" onclick="exportCSV()">⬇ Export CSV</button>
+                    <button class="btn btn-secondary" onclick="addFilter()">+ Add Filter</button>
+                </div>
+                <div id="fieldsPicker" class="fields-picker" style="display:none;"></div>
+                <div id="filtersContainer" class="filters-container"></div>
+            </div>
+            <div id="reportResults">
+                <div class="loading" style="display:none;" id="reportLoading">
+                    <div class="spinner"></div>
+                </div>
+                <div id="reportTable"></div>
+            </div>
+        </div>
+
+        <!-- Rankings Section -->
+        <div id="section-rankings" class="section">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">🏆 Top Rankings</h1>
+                    <p class="page-subtitle">Aggregate ranking reports — top users, products, and more</p>
+                </div>
+            </div>
+            <div class="report-builder">
+                <div class="builder-row">
+                    <div class="form-group">
+                        <label>Ranking Type</label>
+                        <select id="rankingSelect" style="min-width:260px;"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Top N</label>
+                        <select id="rankingLimit">
+                            <option value="5">Top 5</option>
+                            <option value="10" selected>Top 10</option>
+                            <option value="20">Top 20</option>
+                            <option value="50">Top 50</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="executeRanking()">▶ Show Ranking</button>
+                </div>
+            </div>
+            <div class="charts-row" id="rankingChartRow" style="display:none;">
+                <div class="chart-card" style="grid-column: span 2;">
+                    <div class="chart-title" id="rankingChartTitle"></div>
+                    <canvas id="rankingChart"></canvas>
+                </div>
+            </div>
+            <div id="rankingTable"></div>
+        </div>
+    </main>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>

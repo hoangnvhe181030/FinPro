@@ -3,8 +3,8 @@ spring:
     name: auction-system
 
   datasource:
-    url: ${ORACLE_DB_URL:jdbc:oracle:thin:@localhost:1521:ORCL}
-    username: ${ORACLE_USERNAME:AUCTION_DB}
+    url: ${ORACLE_DB_URL:jdbc:oracle:thin:@//localhost:1521/AUCTION_DB}
+    username: ${ORACLE_USERNAME:hoang}
     password: ${ORACLE_PASSWORD:hoang123}
     driver-class-name: oracle.jdbc.OracleDriver
     
@@ -42,3 +42,10 @@ logging:
 
 server:
   port: 8080
+
+# VNPay Configuration
+vnpay:
+  tmn-code: 76VB6FNC
+  hash-secret: KA9RSIL0B09EXZ5WKP5H1B17KD0HP16R
+  url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: http://localhost:8080/api/vnpay/return

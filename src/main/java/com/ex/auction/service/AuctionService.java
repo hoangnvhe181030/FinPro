@@ -292,8 +292,6 @@ public class AuctionService {
      * Made public for UserController access
      */
     public AuctionResponse toResponse(Auction auction) {
-        auction.setEndTime(auction.getEndTime().plusMinutes(SOFT_CLOSE_MINUTES));
-        log.info("Auction {} end time extended to {}", auction.getAuctionId(), auction.getEndTime());
         return AuctionResponse.builder()
                 .id(auction.getAuctionId())
                 .productName(auction.getProduct().getProductName())

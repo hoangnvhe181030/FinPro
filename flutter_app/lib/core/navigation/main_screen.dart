@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/auctions/auction_list_page.dart';
-import '../../features/wallet/wallet_screen.dart';
+import '../../features/chat/chat_list_screen.dart';
 import '../../features/profile/profile_screen.dart';
-import '../../features/notifications/notifications_screen.dart';
 import '../constants/app_colors.dart';
 
 class MainScreen extends StatefulWidget {
@@ -19,8 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   static final List<Widget> _screens = [
     const HomeScreen(),
     const AuctionListPage(),
-    const WalletScreen(),
-    const NotificationsScreen(),
+    const ChatListScreen(),
     const ProfileScreen(),
   ];
 
@@ -57,9 +55,8 @@ class _MainScreenState extends State<MainScreen> {
               children: [
                 _buildNavItem(0, Icons.home_outlined, Icons.home_rounded, 'Home'),
                 _buildNavItem(1, Icons.gavel_outlined, Icons.gavel_rounded, 'Auctions'),
-                _buildNavItem(2, Icons.account_balance_wallet_outlined, Icons.account_balance_wallet_rounded, 'Wallet'),
-                _buildNavItem(3, Icons.notifications_outlined, Icons.notifications_rounded, 'Alerts'),
-                _buildNavItem(4, Icons.person_outline, Icons.person_rounded, 'Profile'),
+                _buildNavItem(2, Icons.chat_bubble_outline_rounded, Icons.chat_bubble_rounded, 'Chat'),
+                _buildNavItem(3, Icons.person_outline, Icons.person_rounded, 'Profile'),
               ],
             ),
           ),
@@ -75,10 +72,10 @@ class _MainScreenState extends State<MainScreen> {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: isActive ? AppColors.primary.withOpacity(0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -86,14 +83,14 @@ class _MainScreenState extends State<MainScreen> {
             Icon(
               isActive ? activeIcon : icon,
               color: isActive ? AppColors.accent : AppColors.textMuted,
-              size: 24,
+              size: 22,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
                 color: isActive ? AppColors.accent : AppColors.textMuted,
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
             ),

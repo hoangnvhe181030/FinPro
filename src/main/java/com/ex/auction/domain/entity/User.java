@@ -30,7 +30,7 @@ public class User {
     @Column(unique = true, length = 100)
     private String email;
 
-    @Column(length = 255)
+    @Column(name = "password_hash", nullable = false, length = 255)
     private String password; // BCrypt hashed
 
     @Column(name = "full_name", length = 100)

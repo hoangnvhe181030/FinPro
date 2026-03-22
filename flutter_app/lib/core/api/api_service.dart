@@ -220,4 +220,19 @@ class ApiService {
     );
     return response.data as Map<String, dynamic>;
   }
+
+  // VNPay API Methods
+  Future<String> createVNPayPayment({
+    required int userId,
+    required int amount,
+  }) async {
+    final response = await post(
+      '/vnpay/create-payment',
+      data: {
+        'userId': userId,
+        'amount': amount,
+      },
+    );
+    return (response.data as Map<String, dynamic>)['paymentUrl'] as String;
+  }
 }

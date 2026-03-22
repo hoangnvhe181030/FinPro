@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/app_widgets.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/api/api_service.dart';
 import '../../data/providers/wallet_provider.dart';
 import '../../data/providers/auth_provider.dart';
+import 'vnpay_webview.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -303,7 +305,9 @@ class _WalletScreenState extends State<WalletScreen> {
           children: [
             Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 20),
-            Text('Deposit Funds', style: Theme.of(context).textTheme.titleLarge),
+            Text('Deposit via VNPay', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 6),
+            Text('Thanh toán qua VNPay sandbox', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
             const SizedBox(height: 20),
             // Quick amounts
             Row(
@@ -327,23 +331,70 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             const SizedBox(height: 24),
             GradientButton(
-              text: 'Confirm Deposit',
-              icon: Icons.check_rounded,
-              colors: [AppColors.success, const Color(0xFF00C853)],
+              text: 'Pay with VNPay',
+              icon: Icons.payment_rounded,
+              colors: [const Color(0xFF0066CC), const Color(0xFF0088FF)],
               onPressed: () async {
-                final amount = double.tryParse(controller.text);
+                final amount = int.tryParse(controller.text);
                 if (amount == null || amount <= 0) return;
                 Navigator.pop(context);
-                final userId = context.read<AuthProvider>().currentUser?.userId;
-                if (userId != null) {
-                  await context.read<WalletProvider>().deposit(userId, amount);
-                }
+                await _startVNPayPayment(amount);
               },
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _startVNPayPayment(int amount) async {
+    final userId = context.read<AuthProvider>().currentUser?.userId;
+    if (userId == null) return;
+
+    try {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+
+      // Create payment URL from backend
+      final apiService = context.read<ApiService>();
+      final paymentUrl = await apiService.createVNPayPayment(
+        userId: userId,
+        amount: amount,
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Dismiss loading
+
+      // Open VNPay WebView
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(builder: (_) => VNPayWebView(paymentUrl: paymentUrl)),
+      );
+
+      // Refresh wallet if payment was successful
+      if (result == true && mounted) {
+        await _loadWallet();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Nạp ${Formatters.formatCurrency(amount)} thành công!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Dismiss loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
   }
 
   Widget _quickAmountChip(TextEditingController controller, int amount) {
